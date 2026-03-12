@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.production
+
+# Runtime
+uploads/
+downloads/
+*.mp4
+*.wav
+*.log
+
+# FFmpeg (if bundled locally)
+ffmpeg/
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Temporary
+tmp/
+temp/
+.cache/
+*.tmp
+
+# Documentation (internal - keep only public docs)
+docs/architecture/
+docs/database/
+docs/ux/
+docs/qa/
+technical-debt-DRAFT.md
+db-specialist-review.md
+ux-specialist-review.md
+qa-review.md
+TECHNICAL-DEBT-REPORT.md
+SETUP-GUIDE.md
+
+# Backup
+backups/
+*.backup

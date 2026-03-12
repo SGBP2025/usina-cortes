@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Usina de Cortes Virais</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      background: linear-gradient(135deg, #ff6b6b, #ee5a24, #f0932b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #888;
+      margin-bottom: 40px;
+      font-size: 0.95rem;
+    }
+
+    /* Status banner */
+    .env-warning {
+      background: #2d1b00;
+      border: 1px solid #ff9800;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: none;
+    }
+    .env-warning code { color: #ffb74d; }
+
+    /* Drop zone */
+    .drop-zone {
+      border: 2px dashed #333;
+      border-radius: 16px;
+      padding: 60px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: #111118;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: #ff6b6b;
+      background: #1a1020;
+    }
+    .drop-zone.disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+    .drop-zone-icon { font-size: 3rem; margin-bottom: 12px; }
+    .drop-zone-text { font-size: 1.1rem; color: #aaa; }
+    .drop-zone-hint { font-size: 0.85rem; color: #666; margin-top: 8px; }
+    .file-info {
+      margin-top: 16px;
+      padding: 12px;
+      background: #1a1a2e;
+      border-radius: 8px;
+      display: none;
+    }
+    .file-info .name { color: #ff6b6b; font-weight: 600; }
+    .file-info .size { color: #888; font-size: 0.85rem; }
+
+    /* Process button */
+    .btn-process {
+      display: none;
+      width: 100%;
+      padding: 16px;
+      margin-top: 20px;
+      background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-process:hover { opacity: 0.9; }
+    .btn-process:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Progress */
+    .progress-section {
+      display: none;
+      margin-top: 32px;
+    }
+    .progress-bar-container {
+      background: #1a1a2e;
+      border-radius: 8px;
+      height: 8px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #ff6b6b, #f0932b);
+      width: 0%;
+      transition: width 0.5s;
+      border-radius: 8px;
+    }
+    .progress-msg {
+      color: #aaa;
+      font-size: 0.9rem;
+      min-height: 24px;
+    }
+
+    /* Clips grid */
+    .clips-section {
+      display: none;
+      margin-top: 40px;
+    }
+    .clips-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .clips-header h2 {
+      font-size: 1.4rem;
+      color: #ff6b6b;
+    }
+    .btn-clear {
+      background: none;
+      border: 1px solid #444;
+      color: #888;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .btn-clear:hover { border-color: #ff6b6b; color: #ff6b6b; }
+
+    .clips-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .clip-card {
+      background: #111118;
+      border: 1px solid #222;
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .clip-card:hover { border-color: #ff6b6b; }
+
+    .clip-card video {
+      width: 100%;
+      aspect-ratio: 9/16;
+      object-fit: cover;
+      background: #000;
+    }
+
+    .clip-info {
+      padding: 12px 16px;
+    }
+    .clip-number {
+      font-size: 0.75rem;
+      color: #ff6b6b;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .clip-time {
+      font-size: 0.85rem;
+      color: #888;
+      margin: 4px 0 8px;
+    }
+    .clip-desc {
+      font-size: 0.82rem;
+      color: #aaa;
+      margin-bottom: 4px;
+      line-height: 1.4;
+    }
+    .clip-desc strong { color: #ccc; }
+    .clip-actions {
+      padding: 0 16px 12px;
+      display: flex;
+      gap: 8px;
+    }
+    .btn-download {
+      flex: 1;
+      padding: 10px;
+      background: #1a1a2e;
+      border: 1px solid #333;
+      color: #e0e0e0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      text-align: center;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-download:hover {
+      background: #ff6b6b;
+      border-color: #ff6b6b;
+      color: white;
+    }
+    .btn-copy {
+      padding: 10px 14px;
+      background: #1a1a2e;
+      border: 1px solid #333;
+      color: #888;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .btn-copy:hover { border-color: #f0932b; color: #f0932b; }
+
+    /* Error */
+    .error-msg {
+      display: none;
+      background: #2d0000;
+      border: 1px solid #ff4444;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-top: 20px;
+      color: #ff8888;
+    }
+
+    input[type="file"] { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Usina de Cortes Virais</h1>
+    <p class="subtitle">Upload seu video e a IA seleciona e corta os melhores momentos para Shorts/Reels/TikTok</p>
+
+    <div class="env-warning" id="envWarning">
+      Faltam API keys no <code>.env</code>: <span id="envMissing"></span>
+    </div>
+
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-zone-icon">&#127916;</div>
+      <div class="drop-zone-text">Arraste seu video aqui ou clique para selecionar</div>
+      <div class="drop-zone-hint">MP4, MOV, MKV — sem limite de tamanho</div>
+    </div>
+    <input type="file" id="fileInput" accept="video/*">
+
+    <div class="file-info" id="fileInfo">
+      <span class="name" id="fileName"></span>
+      <span class="size" id="fileSize"></span>
+    </div>
+
+    <button class="btn-process" id="btnProcess">Gerar Cortes Virais</button>
+
+    <div class="progress-section" id="progressSection">
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="progress-msg" id="progressMsg"></div>
+    </div>
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <div class="clips-section" id="clipsSection">
+      <div class="clips-header">
+        <h2 id="clipsTitle">Cortes Prontos</h2>
+        <button class="btn-clear" id="btnClear">Limpar tudo</button>
+      </div>
+      <div class="clips-grid" id="clipsGrid"></div>
+    </div>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const btnProcess = document.getElementById('btnProcess');
+    const progressSection = document.getElementById('progressSection');
+    const progressBar = document.getElementById('progressBar');
+    const progressMsg = document.getElementById('progressMsg');
+    const errorMsg = document.getElementById('errorMsg');
+    const clipsSection = document.getElementById('clipsSection');
+    const clipsGrid = document.getElementById('clipsGrid');
+    const clipsTitle = document.getElementById('clipsTitle');
+    const envWarning = document.getElementById('envWarning');
+    const envMissing = document.getElementById('envMissing');
+    const btnClear = document.getElementById('btnClear');
+
+    let selectedFile = null;
+
+    // Check env on load
+    fetch('/api/status').then(r => r.json()).then(data => {
+      if (!data.ok) {
+        envWarning.style.display = 'block';
+        envMissing.textContent = data.missing.join(', ');
+        dropZone.classList.add('disabled');
+      }
+    });
+
+    // Drag & drop
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) selectFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) selectFile(fileInput.files[0]);
+    });
+
+    function selectFile(file) {
+      selectedFile = file;
+      fileName.textContent = file.name;
+      fileSize.textContent = ` (${(file.size / 1024 / 1024).toFixed(1)} MB)`;
+      fileInfo.style.display = 'block';
+      btnProcess.style.display = 'block';
+      errorMsg.style.display = 'none';
+    }
+
+    function formatSize(bytes) {
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+      return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+    }
+
+    // Process
+    btnProcess.addEventListener('click', async () => {
+      if (!selectedFile) return;
+
+      btnProcess.disabled = true;
+      btnProcess.textContent = 'Processando...';
+      progressSection.style.display = 'block';
+      errorMsg.style.display = 'none';
+      clipsSection.style.display = 'none';
+      clipsGrid.innerHTML = '';
+      progressBar.style.width = '0%';
+
+      const formData = new FormData();
+      formData.append('video', selectedFile);
+
+      try {
+        const response = await fetch('/api/process', { method: 'POST', body: formData });
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let clipCount = 0;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            if (line.startsWith('event: ')) {
+              const eventType = line.slice(7);
+              continue;
+            }
+            if (line.startsWith('data: ')) {
+              const raw = line.slice(6);
+              try {
+                const data = JSON.parse(raw);
+                // Determine event type from previous line
+                handleEvent(data);
+              } catch {}
+            }
+          }
+        }
+      } catch (err) {
+        showError('Erro de conexao: ' + err.message);
+      }
+
+      btnProcess.disabled = false;
+      btnProcess.textContent = 'Gerar Cortes Virais';
+    });
+
+    let lastEventType = '';
+    const origHandleEvent = handleEvent;
+
+    // Re-parse SSE properly
+    btnProcess.addEventListener('click', () => { lastEventType = ''; }, true);
+
+    function handleEvent(data) {
+      if (data.step !== undefined) {
+        // progress event
+        const pct = Math.round((data.step / data.total) * 100);
+        progressBar.style.width = pct + '%';
+        progressMsg.textContent = data.msg;
+      }
+      if (data.downloadUrl) {
+        // clip_ready event
+        clipsSection.style.display = 'block';
+        addClipCard(data);
+      }
+      if (data.clips) {
+        // done event
+        clipsTitle.textContent = `${data.total} Cortes Prontos`;
+        progressMsg.textContent = 'Concluido!';
+        progressBar.style.width = '100%';
+      }
+      if (data.msg && !data.step && !data.clips && !data.downloadUrl) {
+        // error event
+        showError(data.msg);
+      }
+    }
+
+    function addClipCard(clip) {
+      const card = document.createElement('div');
+      card.className = 'clip-card';
+      card.innerHTML = `
+        <video src="${clip.downloadUrl}" controls preload="metadata"></video>
+        <div class="clip-info">
+          <div class="clip-number">Corte #${clip.index}</div>
+          <div class="clip-time">${clip.start.toFixed(1)}s — ${clip.end.toFixed(1)}s (${clip.duration.toFixed(0)}s)</div>
+          ${clip.tiktok ? `<div class="clip-desc"><strong>TikTok:</strong> ${clip.tiktok}</div>` : ''}
+          ${clip.youtube ? `<div class="clip-desc"><strong>YouTube:</strong> ${clip.youtube}</div>` : ''}
+        </div>
+        <div class="clip-actions">
+          <a class="btn-download" href="${clip.downloadUrl}" download="short_${clip.index}.mp4">Baixar MP4</a>
+          <button class="btn-copy" onclick="copyText(this, '${clip.tiktok.replace(/'/g, "\\'")}')">Copiar</button>
+        </div>
+      `;
+      clipsGrid.appendChild(card);
+    }
+
+    function copyText(btn, text) {
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Copiado!';
+        setTimeout(() => btn.textContent = 'Copiar', 2000);
+      });
+    }
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.style.display = 'block';
+      progressSection.style.display = 'none';
+    }
+
+    // Clear clips
+    btnClear.addEventListener('click', async () => {
+      if (!confirm('Apagar todos os clips?')) return;
+      await fetch('/api/clips', { method: 'DELETE' });
+      clipsGrid.innerHTML = '';
+      clipsSection.style.display = 'none';
+    });
+  </script>
+</body>
+</html>
