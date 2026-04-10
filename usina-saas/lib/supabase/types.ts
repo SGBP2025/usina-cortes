@@ -76,6 +76,10 @@ export type Database = {
           amount_brl: number
           created_at: string
           id: string
+          minutes_purchased: number
+          mp_payment_id: string | null
+          mp_preference_id: string | null
+          pack_id: string | null
           status: string
           stripe_payment_intent_id: string | null
           user_id: string
@@ -84,6 +88,10 @@ export type Database = {
           amount_brl: number
           created_at?: string
           id?: string
+          minutes_purchased?: number
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          pack_id?: string | null
           status?: string
           stripe_payment_intent_id?: string | null
           user_id: string
@@ -92,6 +100,10 @@ export type Database = {
           amount_brl?: number
           created_at?: string
           id?: string
+          minutes_purchased?: number
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          pack_id?: string | null
           status?: string
           stripe_payment_intent_id?: string | null
           user_id?: string
@@ -291,6 +303,10 @@ export type Database = {
           total_consumed: number
           total_purchased: number
         }[]
+      }
+      add_purchased_credits: {
+        Args: { p_user_id: string; p_minutes: number; p_invoice_id: string }
+        Returns: undefined
       }
     }
     Enums: {

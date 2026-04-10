@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "ts-node --esm src/processor.ts",
     "build": "tsc",
-    "start": "node dist/processor.js",
+    "start": "node dist/src/processor.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
