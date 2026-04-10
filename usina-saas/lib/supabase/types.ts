@@ -280,7 +280,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_credits: {
+        Args: { p_user_id: string }
+        Returns: {
+          balance_minutes: number
+          concurrent_jobs: number
+          included_minutes: number
+          plan_id: string
+          plan_name: string
+          total_consumed: number
+          total_purchased: number
+        }[]
+      }
     }
     Enums: {
       ai_service: "whisper" | "claude" | "ffmpeg"
