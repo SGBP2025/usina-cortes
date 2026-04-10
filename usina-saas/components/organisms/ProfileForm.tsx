@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { FormField } from "@/components/molecules/FormField";
-import { updateProfileAction, type SettingsState } from "@/app/(dashboard)/settings/actions";
+import { updateProfileAction, type SettingsState } from "@/app/dashboard/settings/actions";
 
 interface ProfileFormProps {
   name: string;

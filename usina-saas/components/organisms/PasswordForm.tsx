@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { FormField } from "@/components/molecules/FormField";
-import { updatePasswordAction, type SettingsState } from "@/app/(dashboard)/settings/actions";
+import { updatePasswordAction, type SettingsState } from "@/app/dashboard/settings/actions";
 
 export function PasswordForm() {
   const [state, formAction, pending] = useActionState<SettingsState, FormData>(
