@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+/* =========================================================
+   USINA DE CORTES VIRAIS — Design System Tokens (Uma/UX)
+   Tailwind v4: tokens definidos via @theme
+   ========================================================= */
+
+@theme {
+  /* --- Breakpoints (6 pontos) --- */
+  --breakpoint-xs: 320px;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+
+  /* --- Brand Colors --- */
+  --color-brand-primary: #ff6b6b;
+  --color-brand-secondary: #f0932b;
+
+  /* --- Background (dark theme) --- */
+  --color-bg-base: #0a0a0f;
+  --color-bg-surface: #12121a;
+  --color-bg-elevated: #1a1a26;
+  --color-bg-overlay: #22223a;
+
+  /* --- Text --- */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #a0a0b8;
+  --color-text-muted: #606080;
+
+  /* --- Status --- */
+  --color-success: #00c896;
+  --color-warning: #ffd93d;
+  --color-error: #ff4757;
+  --color-processing: #a29bfe;
+
+  /* --- Typography --- */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --text-3xl: 2.5rem;
+
+  /* --- Border Radius --- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* --- Spacing Scale --- */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+}
+
+/* =========================================================
+   CSS Variables (também expostas para uso direto)
+   ========================================================= */
+:root {
+  /* Brand gradient */
+  --gradient-brand: linear-gradient(135deg, #ff6b6b, #f0932b);
+
+  /* Shadows */
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 20px rgba(255, 107, 107, 0.3);
+}
+
+/* =========================================================
+   Base Styles
+   ========================================================= */
+html {
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
+  min-height: 100vh;
+}
+
+/* =========================================================
+   Focus styles acessíveis (WCAG AA)
+   ========================================================= */
+:focus-visible {
+  outline: 2px solid var(--color-brand-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
