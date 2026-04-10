@@ -1,4 +1,6 @@
-// Story EPIC-001.3 — implementado em Sprint 1
+import { AuthForm } from "@/components/organisms/AuthForm";
+import { loginAction } from "@/app/(auth)/login/actions";
+
 export default function LoginPage() {
-  return <div>Login — Story 1.3</div>
+  return <AuthForm mode="login" action={loginAction} />;
 }

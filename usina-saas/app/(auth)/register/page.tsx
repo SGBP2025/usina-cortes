@@ -1,4 +1,6 @@
-// Story EPIC-001.3 — implementado em Sprint 1
+import { AuthForm } from "@/components/organisms/AuthForm";
+import { registerAction } from "@/app/(auth)/register/actions";
+
 export default function RegisterPage() {
-  return <div>Register — Story 1.3</div>
+  return <AuthForm mode="register" action={registerAction} />;
 }
