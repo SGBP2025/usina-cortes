@@ -27,53 +27,58 @@ export default function UploadPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setState("error"); setError("Sessão expirada. Faça login novamente."); return; }
 
-    // Upload direto para Supabase Storage (client-side, sem proxy Next.js)
     const storagePath = `${user.id}/${Date.now()}-${selectedFile.name}`;
 
-    // Simular progresso enquanto faz upload (XMLHttpRequest para progresso real)
+    // Obter signed URL no servidor (evita bug JWT do @supabase/ssr no browser)
+    const signedRes = await fetch("/api/upload/signed-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ storagePath }),
+    });
+
+    if (!signedRes.ok) {
+      const { error } = await signedRes.json();
+      setState("error");
+      setError(`Erro ao preparar upload: ${error}`);
+      return;
+    }
+
+    const { signedUrl, path: uploadPath } = await signedRes.json();
+
     const progressInterval = setInterval(() => {
       setProgress((p) => Math.min(p + 5, 90));
     }, 200);
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from("videos")
-      .upload(storagePath, selectedFile, { upsert: false });
+    const formData = new FormData();
+    formData.append("cacheControl", "3600");
+    formData.append("", selectedFile);
+
+    const uploadResp = await fetch(signedUrl, {
+      method: "POST",
+      body: formData,
+    });
 
     clearInterval(progressInterval);
 
-    if (uploadError || !uploadData) {
+    if (!uploadResp.ok) {
+      const errText = await uploadResp.text().catch(() => "");
       setState("error");
-      setError("Erro no upload. Tente novamente.");
+      setError(`Erro no upload: ${uploadResp.status} — ${errText.substring(0, 150)}`);
       return;
     }
 
     setProgress(95);
-
-    // Inserir registro em video_files
-    const { data: videoFile, error: dbError } = await supabase
-      .from("video_files")
-      .insert({
-        user_id: user.id,
-        storage_path: storagePath,
-        original_name: selectedFile.name,
-        size_bytes: selectedFile.size,
-      })
-      .select("id")
-      .single();
-
-    if (dbError || !videoFile) {
-      setState("error");
-      setError("Erro ao registrar arquivo. Tente novamente.");
-      return;
-    }
-
     setState("processing");
 
-    // Chamar API para criar job e enfileirar
+    // Servidor cria video_files + job + enfileira
     const res = await fetch("/api/jobs/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ videoFileId: videoFile.id, storagePath }),
+      body: JSON.stringify({
+        storagePath,
+        originalName: selectedFile.name,
+        sizeBytes: selectedFile.size,
+      }),
     });
 
     const json = await res.json();
