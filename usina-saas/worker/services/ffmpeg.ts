@@ -44,8 +44,8 @@ export async function extractAudio(
       .audioFrequency(16000)
       .audioChannels(1)
       .output(outputPath)
-      .on("end", resolve)
-      .on("error", reject)
+      .on("end", () => resolve())
+      .on("error", (err) => reject(err))
       .run();
   });
 }
@@ -64,8 +64,8 @@ export async function cutClip(
       .videoCodec("libx264")
       .audioCodec("aac")
       .output(outputPath)
-      .on("end", resolve)
-      .on("error", reject)
+      .on("end", () => resolve())
+      .on("error", (err) => reject(err))
       .run();
   });
 }
