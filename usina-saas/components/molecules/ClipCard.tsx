@@ -1,19 +1,18 @@
 interface ClipCardProps {
   id: string;
-  storagePath: string;
   duration: number | null;
   youtubeTitle: string | null;
   tiktokDescription: string | null;
   instagramDescription: string | null;
-  onDownload: (storagePath: string) => void;
+  onDownload: (id: string) => void;
 }
 
 export function ClipCard({
+  id,
   duration,
   youtubeTitle,
   tiktokDescription,
   instagramDescription,
-  storagePath,
   onDownload,
 }: ClipCardProps) {
   return (
@@ -26,7 +25,7 @@ export function ClipCard({
           )}
         </div>
         <button
-          onClick={() => onDownload(storagePath)}
+          onClick={() => onDownload(id)}
           className="flex-shrink-0 rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:border-brand-primary hover:text-brand-primary transition-colors"
         >
           ⬇ Download

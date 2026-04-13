@@ -1,6 +1,5 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
 import { ClipCard } from "@/components/molecules/ClipCard";
 import Link from "next/link";
 
@@ -16,10 +15,10 @@ interface Clip {
 }
 
 export function ClipsGallery({ clips }: { clips: Clip[] }) {
-  const handleDownload = async (storagePath: string) => {
-    const supabase = createClient();
-    const { data } = await supabase.storage.from("clips").createSignedUrl(storagePath, 3600);
-    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+  const handleDownload = async (clipId: string) => {
+    const res = await fetch(`/api/clips/${clipId}/download`);
+    const data = await res.json();
+    if (data?.url) window.open(data.url, "_blank");
   };
 
   if (clips.length === 0) {
@@ -42,7 +41,6 @@ export function ClipsGallery({ clips }: { clips: Clip[] }) {
         <ClipCard
           key={clip.id}
           id={clip.id}
-          storagePath={clip.storage_path}
           duration={clip.duration}
           youtubeTitle={clip.youtube_title}
           tiktokDescription={clip.tiktok_description}

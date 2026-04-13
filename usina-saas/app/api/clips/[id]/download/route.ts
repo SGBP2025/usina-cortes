@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export async function GET(
   _request: NextRequest,
@@ -10,7 +11,7 @@ export async function GET(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Verificar que o clip pertence ao usuário (via job)
+  // Verificar que o clip pertence ao usuário (via job) — usa JWT do user para RLS
   const { data: clip } = await supabase
     .from("generated_clips")
     .select("storage_path, processing_jobs!inner(user_id)")
@@ -20,7 +21,9 @@ export async function GET(
 
   if (!clip) return NextResponse.json({ error: "Clip não encontrado" }, { status: 404 });
 
-  const { data } = await supabase.storage
+  // Usa service role para createSignedUrl — bucket clips não tem policy pública
+  const serviceClient = createServiceClient();
+  const { data } = await serviceClient.storage
     .from("clips")
     .createSignedUrl(clip.storage_path, 3600);
 
