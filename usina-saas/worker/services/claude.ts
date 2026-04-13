@@ -22,10 +22,9 @@ export async function selectViralMoments(
     .join(" ");
 
   const MODELS = [
-    "z-ai/glm-5",
+    "anthropic/claude-3.5-haiku",
+    "openai/gpt-4o-mini",
     "meta-llama/llama-3.3-70b-instruct",
-    "google/gemini-2.0-flash-001",
-    "mistralai/mistral-7b-instruct",
   ];
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
