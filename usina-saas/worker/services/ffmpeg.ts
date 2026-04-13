@@ -1,6 +1,7 @@
 import { execSync } from "child_process";
 import * as path from "path";
-import ffmpeg from "fluent-ffmpeg";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const ffmpeg = require("fluent-ffmpeg");
 
 function detectFfmpegPath(): string {
   const candidates = [
@@ -45,7 +46,7 @@ export async function extractAudio(
       .audioChannels(1)
       .output(outputPath)
       .on("end", () => resolve())
-      .on("error", (err) => reject(err))
+      .on("error", (err: Error) => reject(err))
       .run();
   });
 }
@@ -61,11 +62,12 @@ export async function cutClip(
     ffmpeg(inputPath)
       .seekInput(startSeconds)
       .duration(duration)
-      .videoCodec("libx264")
-      .audioCodec("aac")
+      .videoCodec("copy")  // sem re-encoding — rápido e sem uso de memória
+      .audioCodec("copy")
+      .outputOptions(["-avoid_negative_ts make_zero"])
       .output(outputPath)
       .on("end", () => resolve())
-      .on("error", (err) => reject(err))
+      .on("error", (err: Error) => reject(err))
       .run();
   });
 }
