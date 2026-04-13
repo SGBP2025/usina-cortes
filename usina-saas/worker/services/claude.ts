@@ -18,11 +18,8 @@ export async function selectViralMoments(
     .map((w) => `[${w.start.toFixed(1)}s] ${w.word}`)
     .join(" ");
 
-  // Apenas modelos confirmados ativos (429 = existe mas rate limited, 404 = removido)
   const MODELS = [
-    "meta-llama/llama-3.3-70b-instruct:free",
-    "google/gemma-3-27b-it:free",
-    "nousresearch/hermes-3-llama-3.1-405b:free",
+    "thudm/glm-4-plus",
   ];
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
