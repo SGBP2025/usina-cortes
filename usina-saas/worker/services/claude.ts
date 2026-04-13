@@ -25,15 +25,15 @@ export async function selectViralMoments(
     .join(" ");
 
   const MODELS = [
-    "anthropic/claude-3.5-haiku",
-    "openai/gpt-4o-mini",
+    "anthropic/claude-3.5-sonnet",
+    "openai/gpt-4o",
     "meta-llama/llama-3.3-70b-instruct",
   ];
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
   // Modelos com contexto grande recebem o transcript completo
-  const LARGE_CONTEXT_MODELS = ["anthropic/claude-3.5-haiku", "openai/gpt-4o-mini", "openai/gpt-4o"];
+  const LARGE_CONTEXT_MODELS = ["anthropic/claude-3.5-sonnet", "anthropic/claude-3.5-haiku", "openai/gpt-4o", "openai/gpt-4o-mini"];
 
   const callModel = async (model: string) => {
     const transcript = LARGE_CONTEXT_MODELS.includes(model) ? FULL_TRANSCRIPT : FALLBACK_TRANSCRIPT;
