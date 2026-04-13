@@ -1,4 +1,4 @@
-import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { Readable } from "stream";
 import * as fs from "fs";
 
@@ -38,4 +38,9 @@ export async function uploadToR2(bucket: string, key: string, filePath: string, 
     Body: body,
     ContentType: contentType,
   }));
+}
+
+/** Deleta objeto do R2 */
+export async function deleteFromR2(bucket: string, key: string): Promise<void> {
+  await r2.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
 }

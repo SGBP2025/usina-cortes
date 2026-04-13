@@ -6,7 +6,7 @@ import * as path from "path";
 import { extractAudio, cutClip } from "../services/ffmpeg";
 import { transcribeAudio } from "../services/whisper";
 import { selectViralMoments } from "../services/claude";
-import { downloadFromR2, uploadToR2, R2_VIDEOS_BUCKET, R2_CLIPS_BUCKET } from "../services/r2";
+import { downloadFromR2, uploadToR2, deleteFromR2, R2_VIDEOS_BUCKET, R2_CLIPS_BUCKET } from "../services/r2";
 
 // NOTA: O worker usa SUPABASE_SERVICE_ROLE_KEY que bypassa RLS.
 // Isso é INTENCIONAL — o worker processa jobs de qualquer usuário.
@@ -134,6 +134,10 @@ videoQueue.process(async (job) => {
       completed_at: new Date().toISOString(),
       credits_consumed: creditsConsumed,
     });
+
+    // Deletar vídeo original do R2 para liberar espaço
+    await deleteFromR2(R2_VIDEOS_BUCKET, storagePath);
+    console.log(`[Worker] Vídeo original deletado: ${storagePath}`);
 
     console.log(`[Worker] Job ${jobId} concluído com ${clips.length} clipes`);
   } catch (error) {
