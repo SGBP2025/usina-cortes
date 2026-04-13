@@ -14,7 +14,10 @@ export async function selectViralMoments(
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) throw new Error("OPENROUTER_API_KEY não configurado");
 
-  const transcript = transcription
+  // Limitar a 800 palavras para não ultrapassar contexto do modelo
+  const MAX_WORDS = 800;
+  const words = transcription.slice(0, MAX_WORDS);
+  const transcript = words
     .map((w) => `[${w.start.toFixed(1)}s] ${w.word}`)
     .join(" ");
 
@@ -84,7 +87,9 @@ Retorne APENAS um JSON válido (sem markdown, sem explicação) neste formato:
       const text: string = data.choices?.[0]?.message?.content ?? "";
 
       if (!text) {
-        lastError = `OpenRouter retornou resposta vazia (${model})`;
+        const raw = JSON.stringify(data).substring(0, 300);
+        lastError = `OpenRouter retornou resposta vazia (${model}): ${raw}`;
+        console.log(`[Worker] Resposta bruta: ${raw}`);
         break;
       }
 
