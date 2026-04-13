@@ -59,22 +59,24 @@ export default function UploadPage() {
       return;
     }
 
-    const { token } = await signedRes.json();
+    const { uploadUrl } = await signedRes.json();
 
     const progressInterval = setInterval(() => {
       setProgress((p) => Math.min(p + 5, 90));
     }, 200);
 
-    // uploadToSignedUrl do SDK inclui apikey + Authorization automaticamente
-    const { error: uploadError } = await supabase.storage
-      .from("videos")
-      .uploadToSignedUrl(storagePath, token, fileToUpload, { cacheControl: "3600" });
+    // PUT direto no R2 via URL presignada
+    const uploadRes = await fetch(uploadUrl, {
+      method: "PUT",
+      body: fileToUpload,
+      headers: { "Content-Type": fileToUpload.type || "video/mp4" },
+    });
 
     clearInterval(progressInterval);
 
-    if (uploadError) {
+    if (!uploadRes.ok) {
       setState("error");
-      setError(`Erro no upload: ${uploadError.message}`);
+      setError(`Erro no upload: ${uploadRes.status} ${uploadRes.statusText}`);
       return;
     }
 

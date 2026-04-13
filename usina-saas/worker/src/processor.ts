@@ -6,6 +6,7 @@ import * as path from "path";
 import { extractAudio, cutClip } from "../services/ffmpeg";
 import { transcribeAudio } from "../services/whisper";
 import { selectViralMoments } from "../services/claude";
+import { downloadFromR2, uploadToR2, R2_VIDEOS_BUCKET, R2_CLIPS_BUCKET } from "../services/r2";
 
 // NOTA: O worker usa SUPABASE_SERVICE_ROLE_KEY que bypassa RLS.
 // Isso é INTENCIONAL — o worker processa jobs de qualquer usuário.
@@ -54,16 +55,10 @@ videoQueue.process(async (job) => {
     // Criar diretório temporário
     fs.mkdirSync(tmpDir, { recursive: true });
 
-    // Step 1: Download do vídeo do Supabase Storage
+    // Step 1: Download do vídeo do R2
     console.log(`[Worker] Step 1: Download do vídeo ${storagePath}`);
-    const { data: fileData, error: downloadError } = await supabase.storage
-      .from("videos")
-      .download(storagePath);
-    if (downloadError || !fileData) throw new Error(`Download falhou: ${downloadError?.message}`);
-
     const videoPath = path.join(tmpDir, "input.mp4");
-    const buffer = Buffer.from(await fileData.arrayBuffer());
-    fs.writeFileSync(videoPath, buffer);
+    await downloadFromR2(R2_VIDEOS_BUCKET, storagePath, videoPath);
 
     // Step 2: Extração de áudio
     console.log(`[Worker] Step 2: Extraindo áudio`);
@@ -103,14 +98,9 @@ videoQueue.process(async (job) => {
 
       await cutClip(videoPath, clipPath, clip.start, clip.end);
 
-      // Upload para Storage
+      // Upload para R2
       const clipStoragePath = `${userId}/${jobId}/${clipFilename}`;
-      const clipBuffer = fs.readFileSync(clipPath);
-      const { error: uploadError } = await supabase.storage
-        .from("clips")
-        .upload(clipStoragePath, clipBuffer, { contentType: "video/mp4" });
-
-      if (uploadError) throw new Error(`Upload do clip ${i + 1} falhou: ${uploadError.message}`);
+      await uploadToR2(R2_CLIPS_BUCKET, clipStoragePath, clipPath);
 
       clipInserts.push({
         job_id: jobId,
