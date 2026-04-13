@@ -22,10 +22,10 @@ export async function selectViralMoments(
     .join(" ");
 
   const MODELS = [
-    "z-ai/glm-5",
-    "google/gemini-flash-1.5",
     "meta-llama/llama-3.3-70b-instruct",
+    "z-ai/glm-5",
     "mistralai/mistral-7b-instruct",
+    "google/gemini-2.0-flash-001",
   ];
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -41,7 +41,7 @@ export async function selectViralMoments(
       },
       body: JSON.stringify({
         model,
-        max_tokens: 2048,
+        max_tokens: 4096,
         messages: [
         {
           role: "user",
