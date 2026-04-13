@@ -43,7 +43,10 @@ export default function UploadPage() {
       return;
     }
 
-    const { signedUrl, token, path: uploadPath } = await signedRes.json();
+    const { signedUrl, path: uploadPath } = await signedRes.json();
+
+    const { data: { session } } = await supabase.auth.getSession();
+    const accessToken = session?.access_token;
 
     const progressInterval = setInterval(() => {
       setProgress((p) => Math.min(p + 5, 90));
@@ -55,7 +58,7 @@ export default function UploadPage() {
 
     const uploadResp = await fetch(signedUrl, {
       method: "POST",
-      headers: { "Authorization": `Bearer ${token}` },
+      headers: accessToken ? { "Authorization": `Bearer ${accessToken}` } : {},
       body: formData,
     });
 
