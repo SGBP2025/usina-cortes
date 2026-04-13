@@ -22,10 +22,10 @@ export async function selectViralMoments(
     .join(" ");
 
   const MODELS = [
-    "meta-llama/llama-3.3-70b-instruct",
     "z-ai/glm-5",
-    "mistralai/mistral-7b-instruct",
+    "meta-llama/llama-3.3-70b-instruct",
     "google/gemini-2.0-flash-001",
+    "mistralai/mistral-7b-instruct",
   ];
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -47,6 +47,12 @@ export async function selectViralMoments(
           role: "user",
           content: `Você é um especialista em criação de conteúdo viral para redes sociais.
 Analise esta transcrição e selecione os 3-5 melhores momentos para clips virais (entre 15-90 segundos cada).
+
+REGRAS CRÍTICAS para os timestamps:
+- O "start" deve ser 1-2 segundos ANTES da primeira palavra do trecho (para não cortar o início da fala)
+- O "end" deve ser 1-2 segundos APÓS a última palavra do trecho (para não cortar o fim da fala)
+- NUNCA corte no meio de uma frase ou palavra — sempre termine em um ponto final, vírgula longa ou pausa natural
+- Prefira momentos com começo e fim bem definidos: uma pergunta completa, uma história completa, um insight completo
 
 Transcrição com timestamps:
 ${transcript}

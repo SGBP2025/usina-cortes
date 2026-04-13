@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { ClipCard } from "@/components/molecules/ClipCard";
 import Link from "next/link";
 
@@ -50,12 +49,10 @@ export function JobStatusView({ jobId, initialStatus, initialClips }: JobStatusV
     return () => clearInterval(interval);
   }, [jobId, status]);
 
-  const handleDownload = async (storagePath: string) => {
-    const supabase = createClient();
-    const { data } = await supabase.storage
-      .from("clips")
-      .createSignedUrl(storagePath, 3600);
-    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+  const handleDownload = async (clipId: string) => {
+    const res = await fetch(`/api/clips/${clipId}/download`);
+    const data = await res.json();
+    if (data?.url) window.open(data.url, "_blank");
   };
 
   const activeStepIndex = status === "completed" ? STEPS.length - 1
@@ -113,7 +110,6 @@ export function JobStatusView({ jobId, initialStatus, initialClips }: JobStatusV
             <ClipCard
               key={clip.id}
               id={clip.id}
-              storagePath={clip.storage_path}
               duration={clip.duration}
               youtubeTitle={clip.youtube_title}
               tiktokDescription={clip.tiktok_description}
