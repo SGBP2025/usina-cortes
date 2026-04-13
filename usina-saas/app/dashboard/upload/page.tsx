@@ -29,7 +29,7 @@ export default function UploadPage() {
 
     const storagePath = `${user.id}/${Date.now()}-${selectedFile.name}`;
 
-    // Obter signed URL no servidor (evita bug JWT do @supabase/ssr no browser)
+    // Gera signed URL no servidor (session do usuário via cookies)
     const signedRes = await fetch("/api/upload/signed-url", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -43,31 +43,22 @@ export default function UploadPage() {
       return;
     }
 
-    const { signedUrl, path: uploadPath } = await signedRes.json();
-
-    const { data: { session } } = await supabase.auth.getSession();
-    const accessToken = session?.access_token;
+    const { token } = await signedRes.json();
 
     const progressInterval = setInterval(() => {
       setProgress((p) => Math.min(p + 5, 90));
     }, 200);
 
-    const formData = new FormData();
-    formData.append("cacheControl", "3600");
-    formData.append("", selectedFile);
-
-    const uploadResp = await fetch(signedUrl, {
-      method: "POST",
-      headers: accessToken ? { "Authorization": `Bearer ${accessToken}` } : {},
-      body: formData,
-    });
+    // uploadToSignedUrl do SDK inclui apikey + Authorization automaticamente
+    const { error: uploadError } = await supabase.storage
+      .from("videos")
+      .uploadToSignedUrl(storagePath, token, selectedFile, { cacheControl: "3600" });
 
     clearInterval(progressInterval);
 
-    if (!uploadResp.ok) {
-      const errText = await uploadResp.text().catch(() => "");
+    if (uploadError) {
       setState("error");
-      setError(`Erro no upload: ${uploadResp.status} — ${errText.substring(0, 150)}`);
+      setError(`Erro no upload: ${uploadError.message}`);
       return;
     }
 
