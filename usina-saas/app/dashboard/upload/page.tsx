@@ -43,7 +43,7 @@ export default function UploadPage() {
       return;
     }
 
-    const { signedUrl, path: uploadPath } = await signedRes.json();
+    const { signedUrl, token, path: uploadPath } = await signedRes.json();
 
     const progressInterval = setInterval(() => {
       setProgress((p) => Math.min(p + 5, 90));
@@ -55,6 +55,7 @@ export default function UploadPage() {
 
     const uploadResp = await fetch(signedUrl, {
       method: "POST",
+      headers: { "Authorization": `Bearer ${token}` },
       body: formData,
     });
 
