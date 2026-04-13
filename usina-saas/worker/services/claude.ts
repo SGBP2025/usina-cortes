@@ -19,7 +19,7 @@ export async function selectViralMoments(
     .join(" ");
 
   const MODELS = [
-    "thudm/glm-4-plus",
+    "z-ai/glm-5",
   ];
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
