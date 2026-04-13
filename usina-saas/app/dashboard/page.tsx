@@ -17,8 +17,30 @@ export default async function DashboardPage() {
   const name = (user.user_metadata?.name as string) ?? "Creator";
   const balance = Number(credits?.balance_minutes ?? 0);
 
+  const isNewUser = jobs.length === 0 && Number(credits?.total_consumed ?? 0) === 0;
+
   return (
     <div className="space-y-8">
+      {/* Banner de boas-vindas para novos usuários */}
+      {isNewUser && (
+        <div className="rounded-2xl border border-brand-primary/30 bg-brand-primary/10 px-6 py-5 flex items-start gap-4">
+          <span className="text-3xl">🎉</span>
+          <div>
+            <p className="text-white font-semibold text-base">Bem-vindo à Usina de Cortes Virais!</p>
+            <p className="text-zinc-300 text-sm mt-1">
+              Você ganhou <span className="text-white font-bold">30 minutos grátis</span> para processar seus primeiros vídeos.
+              Faça o upload e veja a mágica acontecer.
+            </p>
+            <Link
+              href="/dashboard/upload"
+              className="inline-block mt-3 rounded-lg bg-brand-primary px-4 py-2 text-sm font-medium text-white hover:bg-red-500 transition-colors"
+            >
+              Fazer primeiro upload →
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>

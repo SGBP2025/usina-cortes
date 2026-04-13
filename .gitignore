@@ -3,6 +3,12 @@ usina-saas/.next/
 usina-saas/.vercel/
 usina-saas/out/
 
+# Worker build output
+usina-saas/worker/dist/
+
+# Deno
+usina-saas/deno.lock
+
 # Dependencies
 node_modules/
 package-lock.json
@@ -58,3 +64,6 @@ SETUP-GUIDE.md
 # Backup
 backups/
 *.backup
+
+# Local Netlify folder
+.netlify

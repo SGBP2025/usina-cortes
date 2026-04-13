@@ -22,6 +22,7 @@ export default async function CreditsPage({
   const balance = Number(credits?.balance_minutes ?? 0);
   const isLow = balance < 10;
   const paymentStatus = params.payment;
+  const isFreeTier = Number(credits?.total_purchased ?? 0) <= 30;
 
   return (
     <div className="space-y-8 max-w-3xl">
@@ -40,6 +41,17 @@ export default async function CreditsPage({
       {paymentStatus === "pending" && (
         <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-5 py-4 text-yellow-400 text-sm font-medium">
           Pagamento em análise. Você será notificado quando for aprovado.
+        </div>
+      )}
+
+      {/* Banner free tier */}
+      {isFreeTier && (
+        <div className="rounded-xl border border-brand-primary/30 bg-brand-primary/10 px-5 py-4 flex items-center gap-3">
+          <span className="text-2xl">🎁</span>
+          <p className="text-sm text-zinc-200">
+            Você está no <span className="text-white font-semibold">plano gratuito</span> com 30 minutos inclusos no cadastro.
+            Compre um pacote para processar mais vídeos.
+          </p>
         </div>
       )}
 

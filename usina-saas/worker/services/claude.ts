@@ -23,6 +23,9 @@ export async function selectViralMoments(
 
   const MODELS = [
     "z-ai/glm-5",
+    "google/gemini-flash-1.5",
+    "meta-llama/llama-3.3-70b-instruct",
+    "mistralai/mistral-7b-instruct",
   ];
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

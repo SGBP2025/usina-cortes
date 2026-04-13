@@ -94,7 +94,7 @@ videoQueue.process(async (job) => {
 
     // Step 5-6: Corte e upload de clipes
     console.log(`[Worker] Steps 5-6: Cortando e fazendo upload de ${clips.length} clipes`);
-    const clipInserts = [];
+    const clipInserts: Record<string, unknown>[] = [];
 
     for (let i = 0; i < clips.length; i++) {
       const clip = clips[i];
