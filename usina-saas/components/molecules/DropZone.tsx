@@ -8,7 +8,7 @@ interface DropZoneProps {
 }
 
 const ACCEPTED = ["video/mp4", "video/quicktime", "video/x-msvideo"];
-const MAX_SIZE_MB = 500;
+const MAX_SIZE_MB = 4096; // 4GB — vídeos grandes são comprimidos automaticamente no browser
 
 export function DropZone({ onFileSelect, disabled }: DropZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
@@ -56,7 +56,7 @@ export function DropZone({ onFileSelect, disabled }: DropZoneProps) {
         <div className="text-center">
           <p className="text-white font-medium">Arraste seu vídeo aqui</p>
           <p className="text-sm text-zinc-400 mt-1">ou clique para selecionar</p>
-          <p className="text-xs text-zinc-600 mt-2">MP4, MOV ou AVI • Máximo 500MB</p>
+          <p className="text-xs text-zinc-600 mt-2">MP4, MOV ou AVI • Até 4GB • Vídeos grandes são comprimidos automaticamente</p>
         </div>
         <input
           type="file"
