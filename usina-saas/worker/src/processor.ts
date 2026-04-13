@@ -134,6 +134,15 @@ videoQueue.process(async (job) => {
       credits_consumed: creditsConsumed,
     });
 
+    // Step 8: Descontar créditos do usuário (operação atômica via RPC)
+    const { error: rpcError } = await supabase.rpc("consume_job_credits", {
+      p_user_id: userId,
+      p_job_id: jobId,
+      p_minutes: creditsConsumed,
+    });
+    if (rpcError) console.error(`[Worker] Erro ao descontar créditos: ${rpcError.message}`);
+    else console.log(`[Worker] Créditos descontados: ${creditsConsumed.toFixed(2)} min`);
+
     console.log(`[Worker] Job ${jobId} concluído com ${clips.length} clipes`);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro desconhecido";
