@@ -18,21 +18,17 @@ export async function selectViralMoments(
     .map((w) => `[${w.start.toFixed(1)}s] ${w.word}`)
     .join(" ");
 
+  // Apenas modelos confirmados ativos (429 = existe mas rate limited, 404 = removido)
   const MODELS = [
     "meta-llama/llama-3.3-70b-instruct:free",
     "google/gemma-3-27b-it:free",
-    "qwen/qwen-2.5-72b-instruct:free",
-    "deepseek/deepseek-r1:free",
     "nousresearch/hermes-3-llama-3.1-405b:free",
-    "meta-llama/llama-3.1-8b-instruct:free",
-    "google/gemma-2-9b-it:free",
   ];
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-  let lastError = "";
-  for (const model of MODELS) {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  const callModel = async (model: string) => {
+    return fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -65,40 +61,53 @@ Retorne APENAS um JSON válido (sem markdown, sem explicação) neste formato:
         },
       ],
     }),
-  });
+    });
+  };
 
-    if (!response.ok) {
-      const err = await response.text();
-      lastError = `OpenRouter erro ${response.status} (${model}): ${err.substring(0, 200)}`;
-      console.log(`[Worker] Modelo ${model} falhou (${response.status}), tentando próximo...`);
-      if (response.status === 429) await sleep(3000);
-      continue;
+  let lastError = "";
+  // Para cada modelo, tenta até 3x com backoff em caso de 429
+  for (const model of MODELS) {
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const response = await callModel(model);
+
+      if (!response.ok) {
+        const err = await response.text();
+        lastError = `OpenRouter erro ${response.status} (${model}): ${err.substring(0, 200)}`;
+        if (response.status === 429) {
+          const delay = attempt * 10000; // 10s, 20s, 30s
+          console.log(`[Worker] Modelo ${model} rate limited, aguardando ${delay/1000}s (tentativa ${attempt}/3)...`);
+          await sleep(delay);
+          continue; // retry mesmo modelo
+        }
+        console.log(`[Worker] Modelo ${model} falhou (${response.status}), próximo modelo...`);
+        break; // 404 ou outro erro: pula para próximo modelo
+      }
+
+      const data = await response.json() as { choices?: { message?: { content?: string } }[] };
+      const text: string = data.choices?.[0]?.message?.content ?? "";
+
+      if (!text) {
+        lastError = `OpenRouter retornou resposta vazia (${model})`;
+        break;
+      }
+
+      let clips: Clip[];
+      try {
+        const jsonStr = text.replace(/```json?\n?/g, "").replace(/```\n?/g, "").trim();
+        clips = JSON.parse(jsonStr);
+      } catch {
+        lastError = `OpenRouter retornou JSON inválido (${model}): ${text.substring(0, 200)}`;
+        break;
+      }
+
+      if (!Array.isArray(clips) || clips.length === 0) {
+        lastError = `Modelo ${model} não identificou momentos virais`;
+        break;
+      }
+
+      console.log(`[Worker] Modelo ${model} selecionou ${clips.length} clips`);
+      return clips;
     }
-
-    const data = await response.json() as { choices?: { message?: { content?: string } }[] };
-    const text: string = data.choices?.[0]?.message?.content ?? "";
-
-    if (!text) {
-      lastError = `OpenRouter retornou resposta vazia (${model})`;
-      continue;
-    }
-
-    let clips: Clip[];
-    try {
-      const jsonStr = text.replace(/```json?\n?/g, "").replace(/```\n?/g, "").trim();
-      clips = JSON.parse(jsonStr);
-    } catch {
-      lastError = `OpenRouter retornou JSON inválido (${model}): ${text.substring(0, 200)}`;
-      continue;
-    }
-
-    if (!Array.isArray(clips) || clips.length === 0) {
-      lastError = `Modelo ${model} não identificou momentos virais`;
-      continue;
-    }
-
-    console.log(`[Worker] Modelo ${model} selecionou ${clips.length} clips`);
-    return clips;
   }
 
   throw new Error(lastError || "Todos os modelos falharam");
