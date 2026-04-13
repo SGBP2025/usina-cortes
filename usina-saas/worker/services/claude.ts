@@ -14,10 +14,13 @@ export async function selectViralMoments(
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) throw new Error("OPENROUTER_API_KEY não configurado");
 
-  // Limitar a 800 palavras para não ultrapassar contexto do modelo
-  const MAX_WORDS = 800;
-  const words = transcription.slice(0, MAX_WORDS);
-  const transcript = words
+  // Enviar transcript completo — Claude Haiku tem 200K tokens de contexto
+  // e o custo de input para 1h de vídeo (~9000 palavras) é < $0,01
+  // Fallback models (llama, etc.) têm contexto menor: limitamos a 6000 palavras para eles
+  const FULL_TRANSCRIPT = transcription
+    .map((w) => `[${w.start.toFixed(1)}s] ${w.word}`)
+    .join(" ");
+  const FALLBACK_TRANSCRIPT = transcription.slice(0, 6000)
     .map((w) => `[${w.start.toFixed(1)}s] ${w.word}`)
     .join(" ");
 
@@ -29,7 +32,13 @@ export async function selectViralMoments(
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+  // Modelos com contexto grande recebem o transcript completo
+  const LARGE_CONTEXT_MODELS = ["anthropic/claude-3.5-haiku", "openai/gpt-4o-mini", "openai/gpt-4o"];
+
   const callModel = async (model: string) => {
+    const transcript = LARGE_CONTEXT_MODELS.includes(model) ? FULL_TRANSCRIPT : FALLBACK_TRANSCRIPT;
+    console.log(`[Worker] Modelo ${model}: enviando ${transcription.length} palavras${LARGE_CONTEXT_MODELS.includes(model) ? " (completo)" : " (limitado a 6000)"}`);
+
     return fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
