@@ -129,12 +129,9 @@ videoQueue.process(async (job) => {
     await supabase.from("generated_clips").insert(clipInserts);
 
     const creditsConsumed = (clips.reduce((sum, c) => sum + (c.end - c.start), 0)) / 60;
-    await updateJobStatus(jobId, "completed", {
-      completed_at: new Date().toISOString(),
-      credits_consumed: creditsConsumed,
-    });
 
-    // Step 8: Descontar créditos do usuário (operação atômica via RPC)
+    // Step 8: Descontar créditos ANTES de marcar o job como completed
+    // (a guarda de idempotência do RPC verifica credits_consumed IS NULL)
     const { error: rpcError } = await supabase.rpc("consume_job_credits", {
       p_user_id: userId,
       p_job_id: jobId,
@@ -142,6 +139,11 @@ videoQueue.process(async (job) => {
     });
     if (rpcError) console.error(`[Worker] Erro ao descontar créditos: ${rpcError.message}`);
     else console.log(`[Worker] Créditos descontados: ${creditsConsumed.toFixed(2)} min`);
+
+    await updateJobStatus(jobId, "completed", {
+      completed_at: new Date().toISOString(),
+      credits_consumed: creditsConsumed,
+    });
 
     console.log(`[Worker] Job ${jobId} concluído com ${clips.length} clipes`);
   } catch (error) {
