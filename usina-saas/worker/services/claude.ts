@@ -20,10 +20,15 @@ export async function selectViralMoments(
 
   const MODELS = [
     "meta-llama/llama-3.3-70b-instruct:free",
-    "deepseek/deepseek-chat-v3-0324:free",
     "google/gemma-3-27b-it:free",
-    "mistralai/mistral-7b-instruct:free",
+    "qwen/qwen-2.5-72b-instruct:free",
+    "deepseek/deepseek-r1:free",
+    "nousresearch/hermes-3-llama-3.1-405b:free",
+    "meta-llama/llama-3.1-8b-instruct:free",
+    "google/gemma-2-9b-it:free",
   ];
+
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
   let lastError = "";
   for (const model of MODELS) {
@@ -66,6 +71,7 @@ Retorne APENAS um JSON válido (sem markdown, sem explicação) neste formato:
       const err = await response.text();
       lastError = `OpenRouter erro ${response.status} (${model}): ${err.substring(0, 200)}`;
       console.log(`[Worker] Modelo ${model} falhou (${response.status}), tentando próximo...`);
+      if (response.status === 429) await sleep(3000);
       continue;
     }
 
