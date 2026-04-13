@@ -1,6 +1,6 @@
 import { execSync } from "child_process";
 import * as path from "path";
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const ffmpeg = require("fluent-ffmpeg");
 
 function detectFfmpegPath(): string {
