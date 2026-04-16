@@ -73,6 +73,17 @@ export async function cutClip(
   });
 }
 
+export function getVideoDuration(inputPath: string): Promise<number> {
+  return new Promise((resolve, reject) => {
+    ffmpeg.ffprobe(inputPath, (err: Error | null, metadata: { format?: { duration?: number } }) => {
+      if (err) return reject(err);
+      const duration = metadata?.format?.duration;
+      if (!duration) return reject(new Error("Não foi possível obter duração do vídeo"));
+      resolve(duration);
+    });
+  });
+}
+
 export function getOutputPath(dir: string, filename: string): string {
   return path.join(dir, filename);
 }

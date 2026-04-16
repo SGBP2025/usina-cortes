@@ -3,7 +3,7 @@ import Bull from "bull";
 import { createClient } from "@supabase/supabase-js";
 import * as fs from "fs";
 import * as path from "path";
-import { extractAudio, cutClip } from "../services/ffmpeg";
+import { extractAudio, cutClip, getVideoDuration } from "../services/ffmpeg";
 import { transcribeAudio } from "../services/whisper";
 import { selectViralMoments } from "../services/claude";
 import { downloadFromR2, uploadToR2, deleteFromR2, R2_VIDEOS_BUCKET, R2_CLIPS_BUCKET } from "../services/r2";
@@ -59,6 +59,10 @@ videoQueue.process(async (job) => {
     console.log(`[Worker] Step 1: Download do vídeo ${storagePath}`);
     const videoPath = path.join(tmpDir, "input.mp4");
     await downloadFromR2(R2_VIDEOS_BUCKET, storagePath, videoPath);
+
+    // Obter duração do vídeo para cálculo de créditos
+    const videoDurationSeconds = await getVideoDuration(videoPath);
+    const creditsConsumed = videoDurationSeconds / 60;
 
     // Step 2: Extração de áudio
     console.log(`[Worker] Step 2: Extraindo áudio`);
@@ -119,8 +123,6 @@ videoQueue.process(async (job) => {
 
     // Step 7: INSERT em generated_clips e UPDATE processing_jobs
     await supabase.from("generated_clips").insert(clipInserts);
-
-    const creditsConsumed = (clips.reduce((sum, c) => sum + (c.end - c.start), 0)) / 60;
 
     // Step 8: Descontar créditos ANTES de marcar o job como completed
     // (a guarda de idempotência do RPC verifica credits_consumed IS NULL)
