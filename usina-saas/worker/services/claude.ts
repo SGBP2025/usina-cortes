@@ -56,11 +56,21 @@ export async function selectViralMoments(
           content: `Você é um especialista em criação de conteúdo viral para redes sociais.
 Analise esta transcrição e selecione os 3-5 melhores momentos para clips virais (entre 15-90 segundos cada).
 
-REGRAS CRÍTICAS para os timestamps:
-- O "start" deve coincidir com o início de uma frase completa — NUNCA no meio de uma frase que já estava em andamento. Se o trecho começa com "e", "mas", "então", "que", recue até o início da frase anterior.
-- O "end" deve ser logo após a última palavra do trecho, no máximo 0.5 segundos depois — NÃO adicione segundos extras, o sistema já faz isso automaticamente.
-- NUNCA corte no meio de uma frase — sempre termine em ponto final, exclamação, interrogação ou pausa longa.
-- Prefira momentos com começo e fim bem definidos: uma pergunta completa, uma história completa, um insight completo.
+O QUE DEVE SER UM BOM CLIP:
+- Contém uma ideia COMPLETA: começa, desenvolve e conclui. O espectador entende a mensagem sem precisar ver o resto do vídeo.
+- Pode ser uma história curta, um insight poderoso, uma virada, uma provocação com resposta, uma lição de vida.
+- O clip deve TERMINAR com a conclusão da ideia — nunca com uma deixa como "deixa eu explicar", "vou mostrar", "como vou falar sobre" sem a explicação vir logo depois.
+
+O QUE NUNCA DEVE SER UM CLIP:
+- Apresentação pessoal ou introdução ("vou me apresentar", "meu nome é", "hoje vou falar sobre")
+- Transição entre assuntos
+- Momentos que terminam em gancho sem resolver ("e aí eu descobri que..." — fim)
+- Conteúdo sem começo claro (iniciando no meio de um raciocínio)
+
+REGRAS DE TIMESTAMP:
+- O "start" deve coincidir com o início de uma frase completa — NUNCA no meio de uma frase em andamento.
+- O "end" deve ser imediatamente após a última palavra da conclusão da ideia (máximo 0.5s depois).
+- NUNCA corte no meio de uma frase.
 
 Transcrição com timestamps:
 ${transcript}
