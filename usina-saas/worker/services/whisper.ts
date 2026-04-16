@@ -1,5 +1,4 @@
-import { spawn } from "child_process";
-import * as path from "path";
+import * as fs from "fs";
 
 export interface WordTimestamp {
   word: string;
@@ -7,38 +6,36 @@ export interface WordTimestamp {
   end: number;
 }
 
-const SCRIPT_PATH = path.join(__dirname, "../../scripts/transcribe.py");
-const MODEL_SIZE = process.env.WHISPER_MODEL ?? "small";
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const GROQ_URL = "https://api.groq.com/openai/v1/audio/transcriptions";
 
-export function transcribeAudio(audioPath: string): Promise<WordTimestamp[]> {
-  return new Promise((resolve, reject) => {
-    const py = spawn("python3", [SCRIPT_PATH, audioPath, MODEL_SIZE]);
+export async function transcribeAudio(audioPath: string): Promise<WordTimestamp[]> {
+  if (!GROQ_API_KEY) throw new Error("GROQ_API_KEY não configurada");
 
-    let stdout = "";
-    let stderr = "";
+  const fileBuffer = fs.readFileSync(audioPath);
+  const blob = new Blob([fileBuffer], { type: "audio/wav" });
 
-    py.stdout.on("data", (chunk) => { stdout += chunk; });
-    py.stderr.on("data", (chunk) => { stderr += chunk; });
+  const form = new FormData();
+  form.append("file", blob, "audio.wav");
+  form.append("model", "whisper-large-v3-turbo");
+  form.append("response_format", "verbose_json");
+  form.append("timestamp_granularities[]", "word");
 
-    py.on("close", (code) => {
-      if (code !== 0) {
-        return reject(new Error(`faster-whisper falhou (código ${code}): ${stderr}`));
-      }
-
-      let words: WordTimestamp[];
-      try {
-        words = JSON.parse(stdout.trim());
-      } catch {
-        return reject(new Error(`Saída inválida do faster-whisper: ${stdout}`));
-      }
-
-      if (!Array.isArray(words) || words.length === 0) {
-        return reject(new Error("Transcrição sem palavras — verifique o arquivo de áudio."));
-      }
-
-      resolve(words);
-    });
-
-    py.on("error", (err) => reject(new Error(`Erro ao iniciar Python: ${err.message}`)));
+  const res = await fetch(GROQ_URL, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${GROQ_API_KEY}` },
+    body: form,
   });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Groq Whisper falhou (${res.status}): ${err}`);
+  }
+
+  const data = await res.json() as { words?: { word: string; start: number; end: number }[] };
+
+  const words = data.words ?? [];
+  if (words.length === 0) throw new Error("Transcrição sem palavras — verifique o arquivo de áudio.");
+
+  return words.map((w) => ({ word: w.word, start: w.start, end: w.end }));
 }
