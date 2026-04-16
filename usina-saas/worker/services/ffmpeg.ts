@@ -41,7 +41,8 @@ export async function extractAudio(
   return new Promise((resolve, reject) => {
     ffmpeg(inputPath)
       .noVideo()
-      .audioCodec("pcm_s16le")
+      .audioCodec("libmp3lame")
+      .audioBitrate("32k")
       .audioFrequency(16000)
       .audioChannels(1)
       .output(outputPath)

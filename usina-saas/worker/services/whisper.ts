@@ -13,10 +13,10 @@ export async function transcribeAudio(audioPath: string): Promise<WordTimestamp[
   if (!GROQ_API_KEY) throw new Error("GROQ_API_KEY não configurada");
 
   const fileBuffer = fs.readFileSync(audioPath);
-  const blob = new Blob([fileBuffer], { type: "audio/wav" });
+  const blob = new Blob([fileBuffer], { type: "audio/mpeg" });
 
   const form = new FormData();
-  form.append("file", blob, "audio.wav");
+  form.append("file", blob, "audio.mp3");
   form.append("model", "whisper-large-v3-turbo");
   form.append("response_format", "verbose_json");
   form.append("timestamp_granularities[]", "word");

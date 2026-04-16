@@ -62,7 +62,7 @@ videoQueue.process(async (job) => {
 
     // Step 2: Extração de áudio
     console.log(`[Worker] Step 2: Extraindo áudio`);
-    const audioPath = path.join(tmpDir, "audio.wav");
+    const audioPath = path.join(tmpDir, "audio.mp3");
     await extractAudio(videoPath, audioPath);
 
     // Step 3: Transcrição via Whisper
@@ -102,6 +102,7 @@ videoQueue.process(async (job) => {
       const clipStoragePath = `${userId}/${jobId}/${clipFilename}`;
       await uploadToR2(R2_CLIPS_BUCKET, clipStoragePath, clipPath);
 
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
       clipInserts.push({
         job_id: jobId,
         video_file_id: videoFileId,
@@ -112,6 +113,7 @@ videoQueue.process(async (job) => {
         tiktok_description: clip.tiktok_description,
         instagram_description: clip.instagram_description,
         youtube_title: clip.youtube_title,
+        expires_at: expiresAt,
       });
     }
 
