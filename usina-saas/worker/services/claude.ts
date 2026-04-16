@@ -57,10 +57,10 @@ export async function selectViralMoments(
 Analise esta transcrição e selecione os 3-5 melhores momentos para clips virais (entre 15-90 segundos cada).
 
 REGRAS CRÍTICAS para os timestamps:
-- O "start" deve ser 1-2 segundos ANTES da primeira palavra do trecho (para não cortar o início da fala)
-- O "end" deve ser 1-2 segundos APÓS a última palavra do trecho (para não cortar o fim da fala)
-- NUNCA corte no meio de uma frase ou palavra — sempre termine em um ponto final, vírgula longa ou pausa natural
-- Prefira momentos com começo e fim bem definidos: uma pergunta completa, uma história completa, um insight completo
+- O "start" deve coincidir com o início de uma frase completa — NUNCA no meio de uma frase que já estava em andamento. Se o trecho começa com "e", "mas", "então", "que", recue até o início da frase anterior.
+- O "end" deve ser logo após a última palavra do trecho, no máximo 0.5 segundos depois — NÃO adicione segundos extras, o sistema já faz isso automaticamente.
+- NUNCA corte no meio de uma frase — sempre termine em ponto final, exclamação, interrogação ou pausa longa.
+- Prefira momentos com começo e fim bem definidos: uma pergunta completa, uma história completa, um insight completo.
 
 Transcrição com timestamps:
 ${transcript}
