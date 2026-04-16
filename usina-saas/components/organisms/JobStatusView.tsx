@@ -21,6 +21,7 @@ interface Clip {
   tiktok_description: string | null;
   instagram_description: string | null;
   youtube_title: string | null;
+  expires_at: string | null;
 }
 
 interface JobStatusViewProps {
@@ -114,6 +115,7 @@ export function JobStatusView({ jobId, initialStatus, initialClips }: JobStatusV
               youtubeTitle={clip.youtube_title}
               tiktokDescription={clip.tiktok_description}
               instagramDescription={clip.instagram_description}
+              expiresAt={clip.expires_at}
               onDownload={handleDownload}
             />
           ))}

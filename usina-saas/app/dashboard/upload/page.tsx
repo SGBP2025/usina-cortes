@@ -6,9 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import { DropZone } from "@/components/molecules/DropZone";
 import { UploadProgress } from "@/components/molecules/UploadProgress";
 import { Button } from "@/components/atoms/Button";
-import { needsCompression, compressVideo } from "@/lib/compress-video";
 
-type UploadState = "idle" | "compressing" | "uploading" | "processing" | "error";
+type UploadState = "idle" | "uploading" | "processing" | "error";
 
 export default function UploadPage() {
   const router = useRouter();
@@ -27,25 +26,11 @@ export default function UploadPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setState("error"); setError("Sessão expirada. Faça login novamente."); return; }
 
-    // Comprime se o arquivo for grande demais
-    let fileToUpload = selectedFile;
-    if (needsCompression(selectedFile)) {
-      setState("compressing");
-      try {
-        fileToUpload = await compressVideo(selectedFile, setProgress);
-      } catch {
-        setState("error");
-        setError("Erro ao comprimir o vídeo. Tente com um arquivo menor.");
-        return;
-      }
-    }
-
     setState("uploading");
-    setProgress(0);
 
-    const storagePath = `${user.id}/${Date.now()}-${fileToUpload.name}`;
+    const storagePath = `${user.id}/${Date.now()}-${selectedFile.name}`;
 
-    // Gera signed URL no servidor (session do usuário via cookies)
+    // Gera signed URL no servidor
     const signedRes = await fetch("/api/upload/signed-url", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -62,14 +47,14 @@ export default function UploadPage() {
     const { uploadUrl } = await signedRes.json();
 
     const progressInterval = setInterval(() => {
-      setProgress((p) => Math.min(p + 5, 90));
-    }, 200);
+      setProgress((p) => Math.min(p + 2, 90));
+    }, 500);
 
     // PUT direto no R2 via URL presignada
     const uploadRes = await fetch(uploadUrl, {
       method: "PUT",
-      body: fileToUpload,
-      headers: { "Content-Type": fileToUpload.type || "video/mp4" },
+      body: selectedFile,
+      headers: { "Content-Type": selectedFile.type || "video/mp4" },
     });
 
     clearInterval(progressInterval);
@@ -89,8 +74,8 @@ export default function UploadPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         storagePath,
-        originalName: fileToUpload.name,
-        sizeBytes: fileToUpload.size,
+        originalName: selectedFile.name,
+        sizeBytes: selectedFile.size,
       }),
     });
 
@@ -130,25 +115,6 @@ export default function UploadPage() {
             </div>
           )}
         </>
-      )}
-
-      {state === "compressing" && selectedFile && (
-        <div className="rounded-xl border border-zinc-800 bg-bg-surface p-6 space-y-4">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl animate-spin">⚙️</span>
-            <div>
-              <p className="text-white font-medium">Comprimindo vídeo...</p>
-              <p className="text-xs text-zinc-500">Isso pode levar alguns minutos. Não feche a página.</p>
-            </div>
-          </div>
-          <div className="w-full bg-zinc-800 rounded-full h-2">
-            <div
-              className="bg-brand-primary h-2 rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <p className="text-xs text-zinc-500 text-right">{progress}%</p>
-        </div>
       )}
 
       {(state === "uploading" || state === "processing") && selectedFile && (

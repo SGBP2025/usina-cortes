@@ -24,7 +24,7 @@ export async function GET(
   if (job.status === "completed") {
     const { data } = await supabase
       .from("generated_clips")
-      .select("id, storage_path, duration, tiktok_description, instagram_description, youtube_title")
+      .select("id, storage_path, duration, tiktok_description, instagram_description, youtube_title, expires_at")
       .eq("job_id", id);
     clips = data ?? [];
   }

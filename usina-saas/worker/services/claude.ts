@@ -8,21 +8,60 @@ export interface Clip {
   youtube_title: string;
 }
 
+interface Sentence {
+  text: string;
+  start: number;
+  end: number;
+}
+
+// Agrupa palavras em frases completas usando pontuação e pausas longas.
+// Isso garante que o AI só consiga selecionar timestamps que correspondem
+// a limites naturais de frase — nunca no meio de uma frase.
+function groupIntoSentences(words: WordTimestamp[]): Sentence[] {
+  const sentences: Sentence[] = [];
+  let current: Sentence | null = null;
+  const MAX_SENTENCE_SECONDS = 15; // força quebra após 15s sem pontuação
+  const PAUSE_THRESHOLD = 1.2; // pausa > 1.2s = nova frase
+
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    const nextWord = words[i + 1];
+
+    if (!current) {
+      current = { text: word.word, start: word.start, end: word.end };
+    } else {
+      current.text += " " + word.word;
+      current.end = word.end;
+    }
+
+    const trimmed = word.word.trim();
+    const endsWithPunct = /[.!?]$/.test(trimmed);
+    const longPause = nextWord ? (nextWord.start - word.end) > PAUSE_THRESHOLD : true;
+    const tooLong = current.end - current.start >= MAX_SENTENCE_SECONDS;
+
+    if (endsWithPunct || longPause || tooLong || i === words.length - 1) {
+      sentences.push(current);
+      current = null;
+    }
+  }
+
+  return sentences;
+}
+
 export async function selectViralMoments(
   transcription: WordTimestamp[]
 ): Promise<Clip[]> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) throw new Error("OPENROUTER_API_KEY não configurado");
 
-  // Enviar transcript completo — Claude Haiku tem 200K tokens de contexto
-  // e o custo de input para 1h de vídeo (~9000 palavras) é < $0,01
-  // Fallback models (llama, etc.) têm contexto menor: limitamos a 6000 palavras para eles
-  const FULL_TRANSCRIPT = transcription
-    .map((w) => `[${w.start.toFixed(1)}s] ${w.word}`)
-    .join(" ");
-  const FALLBACK_TRANSCRIPT = transcription.slice(0, 6000)
-    .map((w) => `[${w.start.toFixed(1)}s] ${w.word}`)
-    .join(" ");
+  const sentences = groupIntoSentences(transcription);
+
+  // Formata como "FRASE_ID [start → end] texto" para que o AI copie os timestamps exatos
+  const formatSentences = (sents: Sentence[]) =>
+    sents.map((s, i) => `S${i + 1} [${s.start.toFixed(1)} → ${s.end.toFixed(1)}] ${s.text}`).join("\n");
+
+  const FULL_TRANSCRIPT = formatSentences(sentences);
+  const FALLBACK_TRANSCRIPT = formatSentences(sentences.slice(0, 800));
 
   const MODELS = [
     "z-ai/glm-5.1",
@@ -54,28 +93,35 @@ export async function selectViralMoments(
         {
           role: "user",
           content: `Você é um especialista em criação de conteúdo viral para redes sociais.
-Analise esta transcrição e selecione os 3-5 melhores momentos para clips virais (entre 15-90 segundos cada).
 
-O QUE DEVE SER UM BOM CLIP:
-- Contém uma ideia COMPLETA: começa, desenvolve e conclui. O espectador entende a mensagem sem precisar ver o resto do vídeo.
-- Pode ser uma história curta, um insight poderoso, uma virada, uma provocação com resposta, uma lição de vida.
-- O clip deve TERMINAR com a conclusão da ideia — nunca com uma deixa como "deixa eu explicar", "vou mostrar", "como vou falar sobre" sem a explicação vir logo depois.
+A transcrição abaixo está dividida em FRASES NUMERADAS. Cada frase tem um ID (S1, S2...) e timestamps exatos de início e fim.
 
-O QUE NUNCA DEVE SER UM CLIP:
-- Apresentação pessoal ou introdução ("vou me apresentar", "meu nome é", "hoje vou falar sobre")
-- Transição entre assuntos
-- Momentos que terminam em gancho sem resolver ("e aí eu descobri que..." — fim)
-- Conteúdo sem começo claro (iniciando no meio de um raciocínio)
+COMO SELECIONAR UM CLIP:
+1. Encontre um bloco de frases consecutivas que forme uma ideia COMPLETA (15-90 segundos no total).
+2. Use o "start" da primeira frase do bloco e o "end" da última frase do bloco — COPIADOS EXATAMENTE da lista.
+3. O clip deve ser autocontido: o espectador entende a mensagem sem ver o resto do vídeo.
 
-REGRAS DE TIMESTAMP:
-- O "start" deve coincidir com o início de uma frase completa — NUNCA no meio de uma frase em andamento.
-- O "end" deve ser imediatamente após a última palavra da conclusão da ideia (máximo 0.5s depois).
-- NUNCA corte no meio de uma frase.
+TIPOS DE CONTEÚDO IDEAL:
+- História curta com começo, meio e fim
+- Insight ou lição de vida com explicação completa
+- Argumento com tese, desenvolvimento e conclusão
+- Pergunta retórica com a resposta incluída no mesmo clip
 
-Transcrição com timestamps:
+NUNCA SELECIONAR:
+- Apresentações pessoais ("meu nome é", "hoje vou falar sobre")
+- Transições entre assuntos
+- Frases que terminam em gancho sem resolução ("vou explicar agora..." — sem a explicação)
+- Frases que começam no meio de um raciocínio anterior
+
+REGRA ABSOLUTA:
+- Os valores de "start" e "end" no JSON devem ser COPIADOS EXATAMENTE dos timestamps da lista (não invente ou ajuste).
+- start = timestamp "→ início" da primeira frase selecionada
+- end = timestamp "→ fim" da última frase selecionada
+
+Transcrição em frases:
 ${transcript}
 
-Retorne APENAS um JSON válido (sem markdown, sem explicação) neste formato:
+Retorne APENAS um JSON válido (sem markdown, sem explicação):
 [
   {
     "start": 10.5,

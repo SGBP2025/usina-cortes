@@ -12,6 +12,7 @@ interface Clip {
   instagram_description: string | null;
   youtube_title: string | null;
   created_at: string;
+  expires_at: string | null;
 }
 
 export function ClipsGallery({ clips }: { clips: Clip[] }) {
@@ -45,6 +46,7 @@ export function ClipsGallery({ clips }: { clips: Clip[] }) {
           youtubeTitle={clip.youtube_title}
           tiktokDescription={clip.tiktok_description}
           instagramDescription={clip.instagram_description}
+          expiresAt={clip.expires_at}
           onDownload={handleDownload}
         />
       ))}

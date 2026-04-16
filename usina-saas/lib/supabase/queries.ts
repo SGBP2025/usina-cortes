@@ -27,6 +27,7 @@ export interface ClipSummary {
   instagram_description: string | null;
   youtube_title: string | null;
   created_at: string;
+  expires_at: string | null;
 }
 
 export async function getUserCredits(userId: string): Promise<UserCredits | null> {
@@ -78,7 +79,7 @@ export async function getUserClips(userId: string): Promise<ClipSummary[]> {
     .from("generated_clips")
     .select(`
       id, job_id, storage_path, duration,
-      tiktok_description, instagram_description, youtube_title, created_at,
+      tiktok_description, instagram_description, youtube_title, created_at, expires_at,
       processing_jobs!inner(user_id)
     `)
     .eq("processing_jobs.user_id", userId)
