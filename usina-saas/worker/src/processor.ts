@@ -96,7 +96,7 @@ videoQueue.process(async (job) => {
       const clipFilename = `clip-${i + 1}.mp4`;
       const clipPath = path.join(tmpDir, clipFilename);
 
-      await cutClip(videoPath, clipPath, clip.start, clip.end);
+      await cutClip(videoPath, clipPath, clip.start, clip.end + 2);
 
       // Upload para R2
       const clipStoragePath = `${userId}/${jobId}/${clipFilename}`;
