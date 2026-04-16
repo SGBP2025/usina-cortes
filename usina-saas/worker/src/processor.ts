@@ -82,7 +82,9 @@ videoQueue.process(async (job) => {
 
     // Step 4: Seleção de momentos virais via Claude
     console.log(`[Worker] Step 4: Selecionando momentos virais`);
-    const clips = await selectViralMoments(transcription);
+    const rawClips = await selectViralMoments(transcription);
+    const clips = rawClips.filter(c => (c.end - c.start) >= 15);
+    if (clips.length === 0) throw new Error("Nenhum clip com duração mínima de 15s foi gerado. Tente com um vídeo mais longo.");
 
     // Registrar uso do Claude
     await supabase.from("usage_metrics").insert({
