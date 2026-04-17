@@ -141,10 +141,6 @@ videoQueue.process(async (job) => {
       credits_consumed: creditsConsumed,
     });
 
-    // Deletar vídeo original do R2 para liberar espaço
-    await deleteFromR2(R2_VIDEOS_BUCKET, storagePath);
-    console.log(`[Worker] Vídeo original deletado: ${storagePath}`);
-
     console.log(`[Worker] Job ${jobId} concluído com ${clips.length} clipes`);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro desconhecido";
@@ -156,6 +152,13 @@ videoQueue.process(async (job) => {
     if (fs.existsSync(tmpDir)) {
       fs.rmSync(tmpDir, { recursive: true, force: true });
       console.log(`[Worker] Tmp limpo: ${tmpDir}`);
+    }
+    // Deletar vídeo original do R2 sempre (sucesso ou erro sem retry)
+    try {
+      await deleteFromR2(R2_VIDEOS_BUCKET, storagePath);
+      console.log(`[Worker] Vídeo original deletado do R2: ${storagePath}`);
+    } catch (e) {
+      console.error(`[Worker] Falha ao deletar vídeo do R2: ${storagePath}`, e);
     }
   }
 });
