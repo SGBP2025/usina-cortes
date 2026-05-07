@@ -97,7 +97,7 @@ export async function selectViralMoments(
 A transcrição abaixo está dividida em FRASES NUMERADAS. Cada frase tem um ID (S1, S2...) e timestamps exatos de início e fim.
 
 COMO SELECIONAR UM CLIP:
-1. Encontre um bloco de frases consecutivas que forme uma ideia COMPLETA (15-90 segundos no total).
+1. Encontre um bloco de frases consecutivas que forme uma ideia COMPLETA (15-150 segundos no total).
 2. Use o "start" da primeira frase do bloco e o "end" da última frase do bloco — COPIADOS EXATAMENTE da lista.
 3. O clip deve ser autocontido: o espectador entende a mensagem sem ver o resto do vídeo.
 
@@ -112,6 +112,10 @@ NUNCA SELECIONAR:
 - Transições entre assuntos
 - Frases que terminam em gancho sem resolução ("vou explicar agora..." — sem a explicação)
 - Frases que começam no meio de um raciocínio anterior
+
+VERIFICAÇÃO DE FECHAMENTO: antes de definir o "end" do clip, leia a próxima frase no transcript. Se ela continua diretamente o mesmo raciocínio (ex: "e por isso...", "então o que acontece é...", "ou seja...", "portanto...", "e isso significa..."), expanda o clip para incluí-la. Só encerre quando o raciocínio estiver genuinamente concluído — o espectador não deve ficar com a sensação de que faltou algo.
+
+ALVO DE QUANTIDADE: extraia 3-6 clips por 10 minutos de vídeo. Se estiver devolvendo menos, reavalie blocos que considerou "transição" — pode haver uma ideia completa neles que justifica inclusão.
 
 REGRA ABSOLUTA:
 - Os valores de "start" e "end" no JSON devem ser COPIADOS EXATAMENTE dos timestamps da lista (não invente ou ajuste).

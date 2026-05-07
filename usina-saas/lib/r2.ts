@@ -24,8 +24,23 @@ export async function getUploadUrl(bucket: string, key: string): Promise<string>
   );
 }
 
-/** URL presignada para DOWNLOAD (GET) — validade 1 hora */
-export async function getDownloadUrl(bucket: string, key: string): Promise<string> {
+/** URL presignada para DOWNLOAD (GET) — validade 1 hora.
+ * `filename` força o browser a baixar (Content-Disposition: attachment) em vez de tocar inline. */
+export async function getDownloadUrl(bucket: string, key: string, filename?: string): Promise<string> {
+  const downloadName = filename ?? key.split("/").pop() ?? "download.mp4";
+  return getSignedUrl(
+    r2,
+    new GetObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      ResponseContentDisposition: `attachment; filename="${downloadName}"`,
+    }),
+    { expiresIn: 3600 }
+  );
+}
+
+/** URL presignada para PREVIEW inline (GET) — validade 1 hora. Sem Content-Disposition, browser toca inline. */
+export async function getPreviewUrl(bucket: string, key: string): Promise<string> {
   return getSignedUrl(
     r2,
     new GetObjectCommand({ Bucket: bucket, Key: key }),

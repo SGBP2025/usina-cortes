@@ -65,7 +65,7 @@ export async function cutClip(
       .duration(duration)
       .videoCodec("copy")  // sem re-encoding — rápido e sem uso de memória
       .audioCodec("copy")
-      .outputOptions(["-avoid_negative_ts make_zero"])
+      .outputOptions(["-avoid_negative_ts make_zero", "-movflags +faststart"])
       .output(outputPath)
       .on("end", () => resolve())
       .on("error", (err: Error) => reject(err))

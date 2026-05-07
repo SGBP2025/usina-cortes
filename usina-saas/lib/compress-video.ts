@@ -44,7 +44,8 @@ export async function compressVideo(
   ]);
 
   const data = await ffmpeg.readFile(outputName);
-  const blob = new Blob([data], { type: "video/mp4" });
+  const bytes = typeof data === "string" ? new TextEncoder().encode(data) : new Uint8Array(data);
+  const blob = new Blob([bytes], { type: "video/mp4" });
 
   // Retorna um File com mesmo nome do original
   return new File([blob], file.name.replace(/\.[^.]+$/, ".mp4"), {

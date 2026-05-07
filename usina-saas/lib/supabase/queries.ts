@@ -86,5 +86,5 @@ export async function getUserClips(userId: string): Promise<ClipSummary[]> {
     .order("created_at", { ascending: false })
     .limit(50);
 
-  return (data ?? []) as ClipSummary[];
+  return (data ?? []) as unknown as ClipSummary[];
 }
