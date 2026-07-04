@@ -62,15 +62,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Erro ao criar job" }, { status: 500 });
   }
 
-  // Enfileirar no Bull (Redis pode não estar rodando em dev)
+  // Enfileirar no Bull. Se falhar (Redis offline/lento), o job ficaria 'pending'
+  // órfão e o front faria polling infinito. Então marcamos como 'error' e
+  // devolvemos falha — o usuário vê o erro e pode tentar de novo.
   try {
     const timeout = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error("Queue timeout")), 3000)
     );
     await Promise.race([enqueueVideoJob(job.id, user.id, videoFile.id, storagePath), timeout]);
   } catch (queueError) {
-    console.warn("Bull queue indisponível (Redis offline?):", queueError);
-    // Job criado no banco mas não enfileirado — aceitável para dev local
+    console.error("Bull queue indisponível (Redis offline?):", queueError);
+    await supabase
+      .from("processing_jobs")
+      .update({
+        status: "error",
+        error_message: "Não foi possível iniciar o processamento agora. Tente novamente em instantes.",
+      })
+      .eq("id", job.id);
+
+    return NextResponse.json(
+      { error: "Não foi possível iniciar o processamento agora. Tente novamente em instantes." },
+      { status: 503 }
+    );
   }
 
   return NextResponse.json({ jobId: job.id });
