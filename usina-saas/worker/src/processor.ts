@@ -46,6 +46,7 @@ async function updateJobStatus(
 
 videoQueue.process(async (job) => {
   const { jobId, userId, videoFileId, storagePath } = job.data;
+  let succeeded = false;
   const tmpDir = path.join("/tmp", jobId);
 
   try {
@@ -140,6 +141,7 @@ videoQueue.process(async (job) => {
       completed_at: new Date().toISOString(),
       credits_consumed: creditsConsumed,
     });
+    succeeded = true;
 
     console.log(`[Worker] Job ${jobId} concluído com ${clips.length} clipes`);
   } catch (error) {
@@ -148,17 +150,29 @@ videoQueue.process(async (job) => {
     await updateJobStatus(jobId, "error", { error_message: message });
     throw error; // Bull fará retry
   } finally {
-    // CRÍTICO: limpeza sempre executada, independente de sucesso ou falha
+    // Limpeza do tmp local: sempre (é efêmero, cada tentativa recria).
     if (fs.existsSync(tmpDir)) {
       fs.rmSync(tmpDir, { recursive: true, force: true });
       console.log(`[Worker] Tmp limpo: ${tmpDir}`);
     }
-    // Deletar vídeo original do R2 sempre (sucesso ou erro sem retry)
-    try {
-      await deleteFromR2(R2_VIDEOS_BUCKET, storagePath);
-      console.log(`[Worker] Vídeo original deletado do R2: ${storagePath}`);
-    } catch (e) {
-      console.error(`[Worker] Falha ao deletar vídeo do R2: ${storagePath}`, e);
+
+    // Vídeo original no R2: deletar SÓ em sucesso ou na última tentativa.
+    // Antes deletava em toda tentativa, então o 1º erro (mesmo transitório)
+    // apagava o fonte e os retries do Bull morriam no download — o usuário
+    // perdia o vídeo por uma falha que era passageira.
+    const maxAttempts = job.opts.attempts ?? 1;
+    const isLastAttempt = job.attemptsMade >= maxAttempts - 1;
+    if (succeeded || isLastAttempt) {
+      try {
+        await deleteFromR2(R2_VIDEOS_BUCKET, storagePath);
+        console.log(`[Worker] Vídeo original deletado do R2: ${storagePath}`);
+      } catch (e) {
+        console.error(`[Worker] Falha ao deletar vídeo do R2: ${storagePath}`, e);
+      }
+    } else {
+      console.log(
+        `[Worker] Vídeo mantido no R2 para retry (tentativa ${job.attemptsMade + 1}/${maxAttempts}): ${storagePath}`,
+      );
     }
   }
 });
