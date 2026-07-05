@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { getPackById } from "@/lib/billing/packs";
 
 export async function POST(req: NextRequest) {
@@ -16,8 +17,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Pack inválido" }, { status: 400 });
   }
 
-  // Cria registro de invoice no Supabase (status: pending)
-  const { data: invoice, error: invoiceErr } = await supabase
+  // Cria registro de invoice no Supabase (status: pending).
+  // IMPORTANTE: escrita em invoices é feita com o service role client —
+  // a RLS de invoices só permite SELECT ao usuário (ver migration 007).
+  // Com o client do usuário o INSERT era negado pela RLS e a compra quebrava com 500.
+  const admin = createServiceClient();
+  const { data: invoice, error: invoiceErr } = await admin
     .from("invoices")
     .insert({
       user_id: user.id,
@@ -66,8 +71,8 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  // Salva preference_id na invoice
-  await supabase
+  // Salva preference_id na invoice (service role — RLS de invoices é SELECT-only)
+  await admin
     .from("invoices")
     .update({ mp_preference_id: result.id })
     .eq("id", invoice.id);
